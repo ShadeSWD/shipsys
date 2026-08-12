@@ -36,4 +36,12 @@
       <path d="M10,0 L0,4 L10,8 z" fill="#16161a"/></marker>
   </defs>`;
   document.body.appendChild(defs);
+  // favicon (data-URI, чтобы не было 404 на /favicon.ico)
+  if (!document.querySelector('link[rel~="icon"]')) {
+    const fav = document.createElement('link');
+    fav.rel = 'icon';
+    fav.href = 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="88">\u{1F9ED}</text></svg>');
+    document.head.appendChild(fav);
+  }
 })();

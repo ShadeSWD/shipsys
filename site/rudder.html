@@ -6,6 +6,10 @@
 <title>Рулевое устройство: расчёт пера руля по Правилам РМРС</title>
 <meta name="description" content="Проектирование рулевого устройства морского судна: площадь и балансировка пера, профиль NACA0020, эффективность, силы и моменты по Правилам РМРС, диаметр баллера, толщина обшивки — с живым пересчётом.">
 <link rel="stylesheet" href="assets/style.css">
+<style>
+  .rt-btn.on { background:#155e75; border-color:#155e75; color:#fff; }
+  .rt-btn.on:hover { color:#fff; border-color:#155e75; }
+</style>
 </head>
 <body>
 <main class="wrap">
@@ -105,13 +109,260 @@
     (руль типа III по Правилам РМРС). Числа на схеме обновляются живым расчётом ниже.</div>
   </div>
 
+  <h2 id="types">Типы рулей</h2>
+  <p>Правила РМРС не задают конструкцию руля — они задают <b>расчётную схему</b>:
+  число и расположение опор пера определяют, как между баллером и ахтерштевнем
+  делятся изгиб и кручение. Три характерные схемы показаны ниже; переключение
+  меняет чертёж и пояснение о том, что изменится в расчёте по Правилам.
+  <b>Числовой расчёт на этой странице выполнен для схемы III (полуподвесной
+  руль) и при переключении типов не меняется.</b></p>
+  <div class="panel">
+    <div class="stepper-bar" style="margin-bottom:10px">
+      <button type="button" class="btn rt-btn" id="rt-btn-1">простой навесной (на рудерпосте)</button>
+      <button type="button" class="btn rt-btn" id="rt-btn-3">полуподвесной на кронштейне — тип III</button>
+      <button type="button" class="btn rt-btn" id="rt-btn-s">подвесной балансирный</button>
+    </div>
+    <div class="boards">
+      <div style="max-width:480px">
+
+        <svg id="rt-fig-1" viewBox="0 0 460 470" class="geo-board" role="img" aria-label="Простой навесной руль на рудерпосте">
+          <line x1="14" y1="34" x2="446" y2="34" stroke="#155e75" stroke-width="1.2" stroke-dasharray="10 5"/>
+          <text x="18" y="27" class="lbl" fill="#155e75" font-size="11">ЛГВЛ</text>
+          <path d="M14,150 C130,118 290,84 446,66" class="ln"/>
+          <line x1="14" y1="396" x2="150" y2="396" class="ln"/>
+          <path d="M150,396 C158,320 161,230 163,108" class="ln"/>
+          <rect x="140" y="392" width="150" height="12" fill="#6b6b74"/>
+          <text x="215" y="420" class="lbl gray" font-size="12" text-anchor="middle">подошва</text>
+          <line x1="163" y1="252" x2="196" y2="252" stroke="#6b6b74" stroke-width="8"/>
+          <ellipse cx="206" cy="252" rx="10" ry="95" fill="rgba(179,56,46,.13)" stroke="#b3382e" stroke-width="1.4"/>
+          <circle cx="206" cy="252" r="8" fill="#b3382e"/>
+          <rect x="272" y="90" width="14" height="306" fill="#6b6b74" stroke="#16161a"/>
+          <text x="268" y="80" class="lbl" font-size="13" text-anchor="end">рудерпост</text>
+          <rect x="290" y="112" width="132" height="268" rx="4" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
+          <text x="360" y="150" class="lbl" fill="#155e75" font-size="13" text-anchor="middle">перо руля</text>
+          <line x1="288" y1="40" x2="288" y2="400" stroke="#1a7f37" stroke-width="1" stroke-dasharray="7 4"/>
+          <rect x="283" y="44" width="10" height="59" fill="#6b6b74"/>
+          <text x="298" y="58" class="lbl" font-size="12">баллер</text>
+          <rect x="274" y="103" width="28" height="5" fill="#16161a"/>
+          <rect x="274" y="108" width="28" height="5" fill="#16161a"/>
+          <g stroke="#1a7f37" stroke-width="1.6" fill="#fff">
+            <rect x="281" y="142" width="14" height="16"/>
+            <rect x="281" y="247" width="14" height="16"/>
+            <rect x="281" y="344" width="14" height="16"/>
+          </g>
+          <g fill="#1a7f37">
+            <circle cx="288" cy="150" r="3"/><circle cx="288" cy="255" r="3"/><circle cx="288" cy="352" r="3"/>
+          </g>
+          <line x1="296" y1="255" x2="356" y2="236" class="ln-thin" stroke-width=".9"/>
+          <text x="359" y="233" class="lbl" fill="#1a7f37" font-size="12">штыри (петли) —</text>
+          <text x="359" y="247" class="lbl" fill="#1a7f37" font-size="12">опоры пера</text>
+          <text x="294" y="391" class="lbl" fill="#1a7f37" font-size="11">ось вращения</text>
+        </svg>
+
+        <svg id="rt-fig-3" viewBox="0 0 460 470" class="geo-board" role="img" aria-label="Полуподвесной руль на кронштейне — тип III">
+          <line x1="14" y1="34" x2="446" y2="34" stroke="#155e75" stroke-width="1.2" stroke-dasharray="10 5"/>
+          <text x="18" y="27" class="lbl" fill="#155e75" font-size="11">ЛГВЛ</text>
+          <path d="M14,150 C130,116 290,82 446,64" class="ln"/>
+          <line x1="14" y1="396" x2="172" y2="396" class="ln"/>
+          <path d="M172,396 C180,318 183,226 185,106" class="ln"/>
+          <rect x="150" y="392" width="92" height="12" fill="#6b6b74"/>
+          <text x="196" y="420" class="lbl gray" font-size="12" text-anchor="middle">подошва короткая</text>
+          <line x1="185" y1="248" x2="216" y2="248" stroke="#6b6b74" stroke-width="8"/>
+          <ellipse cx="226" cy="248" rx="10" ry="92" fill="rgba(179,56,46,.13)" stroke="#b3382e" stroke-width="1.4"/>
+          <circle cx="226" cy="248" r="8" fill="#b3382e"/>
+          <polygon points="268,88 316,88 309,240 279,240" fill="#6b6b74" stroke="#16161a"/>
+          <text x="262" y="150" class="lbl" font-size="13" text-anchor="end">кронштейн</text>
+          <path d="M318,100 L440,100 L440,388 L252,388 L252,250 L303,250 L311,240 L318,100 Z" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
+          <text x="385" y="330" class="lbl" fill="#155e75" font-size="13" text-anchor="middle">перо</text>
+          <line x1="312" y1="36" x2="312" y2="398" stroke="#1a7f37" stroke-width="1" stroke-dasharray="7 4"/>
+          <rect x="307" y="44" width="10" height="44" fill="#6b6b74"/>
+          <text x="330" y="90" class="lbl" font-size="12">баллер</text>
+          <rect x="298" y="54" width="28" height="22" fill="none" stroke="#1a7f37" stroke-width="2"/>
+          <line x1="298" y1="65" x2="252" y2="54" class="ln-thin" stroke-width=".9"/>
+          <text x="248" y="46" class="lbl" fill="#1a7f37" font-size="12" text-anchor="end">опора 1: подшипник</text>
+          <text x="248" y="60" class="lbl" fill="#1a7f37" font-size="12" text-anchor="end">баллера в корпусе</text>
+          <circle cx="312" cy="245" r="8" fill="#fff" stroke="#1a7f37" stroke-width="2"/>
+          <circle cx="312" cy="245" r="2.5" fill="#1a7f37"/>
+          <line x1="320" y1="247" x2="356" y2="262" class="ln-thin" stroke-width=".9"/>
+          <text x="359" y="266" class="lbl" fill="#1a7f37" font-size="12">опора 2: штырь</text>
+          <text x="359" y="280" class="lbl" fill="#1a7f37" font-size="12">кронштейна</text>
+          <text x="230" y="452" class="lbl" fill="#1a7f37" font-size="13" text-anchor="middle">тип III — расчётная схема живого расчёта этой страницы</text>
+        </svg>
+
+        <svg id="rt-fig-s" viewBox="0 0 460 470" class="geo-board" role="img" aria-label="Подвесной балансирный руль">
+          <line x1="14" y1="34" x2="446" y2="34" stroke="#155e75" stroke-width="1.2" stroke-dasharray="10 5"/>
+          <text x="18" y="27" class="lbl" fill="#155e75" font-size="11">ЛГВЛ</text>
+          <path d="M14,140 C140,104 300,72 446,58" class="ln"/>
+          <line x1="14" y1="396" x2="150" y2="396" class="ln"/>
+          <path d="M150,396 C172,330 186,240 196,90" class="ln"/>
+          <line x1="14" y1="396" x2="446" y2="396" class="ln-thin gray" stroke-dasharray="4 5" stroke-width=".8"/>
+          <line x1="180" y1="240" x2="212" y2="240" stroke="#6b6b74" stroke-width="8"/>
+          <ellipse cx="222" cy="240" rx="10" ry="90" fill="rgba(179,56,46,.13)" stroke="#b3382e" stroke-width="1.4"/>
+          <circle cx="222" cy="240" r="8" fill="#b3382e"/>
+          <polygon points="258,112 420,112 408,384 272,384" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
+          <polygon points="258,112 298,112 298,384 272,384" fill="rgba(26,127,55,.10)"/>
+          <text x="283" y="252" class="lbl" fill="#1a7f37" font-size="14" text-anchor="middle">A₁</text>
+          <text x="360" y="252" class="lbl" fill="#155e75" font-size="13" text-anchor="middle">перо</text>
+          <line x1="298" y1="36" x2="298" y2="392" stroke="#1a7f37" stroke-width="1" stroke-dasharray="7 4"/>
+          <rect x="293" y="44" width="10" height="70" fill="#6b6b74"/>
+          <text x="316" y="102" class="lbl" font-size="12">баллер</text>
+          <rect x="284" y="38" width="28" height="14" fill="none" stroke="#1a7f37" stroke-width="2"/>
+          <rect x="284" y="60" width="28" height="14" fill="none" stroke="#1a7f37" stroke-width="2"/>
+          <line x1="284" y1="52" x2="250" y2="48" class="ln-thin" stroke-width=".9"/>
+          <text x="246" y="44" class="lbl" fill="#1a7f37" font-size="12" text-anchor="end">два подшипника —</text>
+          <text x="246" y="58" class="lbl" fill="#1a7f37" font-size="12" text-anchor="end">опоры консоли</text>
+          <text x="230" y="452" class="lbl" fill="#1a7f37" font-size="13" text-anchor="middle">балансирная доля A₁/A ≈ 0,2–0,3</text>
+        </svg>
+
+      </div>
+      <div>
+        <div id="rt-text-1" hidden>
+          <p><b>Простой навесной руль.</b> Перо навешено на рудерпост — кормовую
+          ветвь ахтерштевня — на нескольких штырях-петлях и опирается на них по
+          всей высоте.</p>
+          <p><b>Что меняется в расчёте по Правилам.</b> Расчётная схема —
+          многоопорная балка: боковую силу F воспринимают штыри рудерпоста,
+          изгибающий момент на баллере практически отсутствует, и баллер
+          рассчитывается на чистое кручение
+          (d₀ = k₁₀·∛(M<sub>к</sub>/R<sub>eH</sub>) без добавки на изгиб).
+          Ось вращения совпадает с линией штырей у передней кромки, балансировка
+          невозможна (A₁ ≈ 0) — плечо крутящего момента (0,35 − A₁/A) достигает
+          максимума 0,35, поэтому M<sub>к</sub> при той же силе примерно вдвое
+          больше, чем у балансирного руля. Добавляются расчёты штырей (диаметры —
+          по реакциям опор) и петель. Схема характерна для судов старой
+          постройки, буксиров и малых судов.</p>
+        </div>
+        <div id="rt-text-3" hidden>
+          <p><b>Полуподвесной руль на кронштейне (тип III)</b> — расчётная схема
+          выполненного на этой странице числового расчёта. Верхняя часть пера
+          проходит за неподвижным кронштейном (рогом), связанным с корпусом;
+          ниже кронштейна перо работает как консоль.</p>
+          <p><b>Расчётные опоры</b> (выделены зелёным): 1 — подшипник баллера в
+          корпусе, 2 — штырь на нижнем торце кронштейна. Балка «руль — баллер»
+          рассчитывается как двухопорная: реакции и изгибающий момент M₂
+          определяются коэффициентами k₅ и k₇ по геометрии подвески l₁, l₂, e
+          (шаг 12 расчёта), сосредоточенная сила на нижнюю опору Q₂ = 0; баллер
+          работает на изгиб и кручение совместно (шаг 13). Балансирная доля
+          A₁/A ≈ 0,2 снижает M<sub>к</sub> (шаг 9). В компоновке курсового
+          проекта нижний штырь размещён в пятке ахтерштевня — расчётная схема
+          балки при этом та же: две опоры, консоль между ними отсутствует.</p>
+        </div>
+        <div id="rt-text-s" hidden>
+          <p><b>Подвесной балансирный руль.</b> Перо держится только на баллере:
+          опор в ахтерштевне нет, подошва отсутствует — корма свободна.
+          Стандартная схема современных транспортных судов.</p>
+          <p><b>Что меняется в расчёте по Правилам.</b> Баллер — консольная
+          балка: кроме крутящего момента M<sub>к</sub> он воспринимает полный
+          изгибающий момент M = F·r, где r — расстояние от центра давления пера
+          до нижнего (гельмпортового) подшипника. Диаметр баллера определяется по
+          совместному действию изгиба и кручения и получается наибольшим из трёх
+          схем; расчёты штырей и кронштейна исчезают. Чтобы разгрузить рулевую
+          машину, балансирную долю увеличивают до A₁/A ≈ 0,2–0,3 — центр
+          давления приближается к оси, и плечо (0,35 − A₁/A) сокращается.
+          Платой служат жёсткие требования к опорам в корпусе: два подшипника
+          на коротком пролёте.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Силы на пере и узел соединения с баллером</h2>
+  <div class="boards">
+    <div class="panel">
+      <svg viewBox="0 0 640 320" class="geo-board" role="img" aria-label="Схема сил на пере руля: поток, боковая сила в центре давления, плечо до оси баллера">
+        <defs>
+          <marker id="arrRedF" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#b3382e"/></marker>
+          <marker id="arrGrnF" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#1a7f37"/></marker>
+          <clipPath id="clipProf"><polygon points="120,160 130,142.6 160,128.8 200,121.7 240,120 300,122.8 360,129.6 420,138.9 480,150.3 520,159.2 520,160.8 480,169.7 420,181.1 360,190.4 300,197.2 240,200 200,198.3 160,191.2 130,177.4"/></clipPath>
+        </defs>
+        <polygon points="120,160 130,142.6 160,128.8 200,121.7 240,120 300,122.8 360,129.6 420,138.9 480,150.3 520,159.2 520,160.8 480,169.7 420,181.1 360,190.4 300,197.2 240,200 200,198.3 160,191.2 130,177.4" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
+        <rect x="120" y="118" width="80" height="84" fill="rgba(26,127,55,.12)" clip-path="url(#clipProf)"/>
+        <text x="152" y="152" class="lbl" fill="#1a7f37" font-size="13">A₁</text>
+        <line x1="24" y1="131" x2="104" y2="114" stroke="#16161a" stroke-width="1.6" marker-end="url(#arrE)"/>
+        <line x1="28" y1="180" x2="104" y2="164" stroke="#16161a" stroke-width="1.6" marker-end="url(#arrE)"/>
+        <line x1="24" y1="262" x2="104" y2="245" stroke="#16161a" stroke-width="1.6" marker-end="url(#arrE)"/>
+        <text x="24" y="46" class="lbl" font-size="13">набегающий поток,</text>
+        <text x="24" y="62" class="lbl" font-size="13">скорость V₁ (в струе винта)</text>
+        <line x1="36" y1="160" x2="118" y2="160" class="ln-thin" stroke-dasharray="5 4" stroke-width=".9"/>
+        <path d="M60,160 A60,60 0 0 1 61.3,172.7" fill="none" stroke="#16161a" stroke-width="1.1"/>
+        <text x="44" y="177" class="lbl" font-size="13">α</text>
+        <line x1="260" y1="160" x2="260" y2="52" stroke="#b3382e" stroke-width="2.5" marker-end="url(#arrRedF)"/>
+        <circle cx="260" cy="160" r="4.5" fill="#b3382e"/>
+        <text x="270" y="66" class="lbl" fill="#b3382e" font-size="14">F — боковая сила</text>
+        <text x="272" y="154" class="lbl" fill="#b3382e" font-size="12">центр давления (≈0,35·b от носика)</text>
+        <line x1="200" y1="44" x2="200" y2="278" stroke="#1a7f37" stroke-width="1" stroke-dasharray="7 4"/>
+        <circle cx="200" cy="160" r="3.5" fill="#1a7f37"/>
+        <text x="196" y="294" class="lbl" fill="#1a7f37" font-size="12" text-anchor="end">ось баллера (0,2·b от носика)</text>
+        <line x1="260" y1="205" x2="260" y2="246" class="ln-thin" stroke-width=".8"/>
+        <line x1="200" y1="240" x2="260" y2="240" class="ln-dim"/>
+        <text x="230" y="258" class="lbl-dim" text-anchor="middle">ℓ = (0,35 − A₁/A)·b̄</text>
+        <path d="M156,160 A44,44 0 0 1 200,116" fill="none" stroke="#1a7f37" stroke-width="1.8" marker-end="url(#arrGrnF)"/>
+        <text x="118" y="106" class="lbl" fill="#1a7f37" font-size="13">Mк = F·ℓ</text>
+      </svg>
+      <div class="caption">Схема сил на пере (вид в плане). Набегающий поток со
+      скоростью V₁ под углом атаки α создаёт боковую силу F, приложенную в
+      центре давления: на переднем ходу он лежит примерно на 0,35 хорды от
+      носика. Крутящий момент на баллере M<sub>к</sub> = F·ℓ, где плечо ℓ —
+      расстояние от центра давления до оси. Балансировка выносит ось в глубь
+      пера (часть A₁ — в нос от оси): по Правилам ℓ = b̄·(0,35 − A₁/A), и при
+      A₁/A = 0,2 плечо падает с 0,35·b̄ до 0,15·b̄ — момент снижается более чем
+      вдвое при той же разворачивающей силе.</div>
+    </div>
+    <div class="panel">
+      <svg viewBox="0 0 460 400" class="geo-board" role="img" aria-label="Узел соединения: баллер, фланец, перо руля">
+        <rect x="205" y="18" width="50" height="114" fill="#6b6b74" stroke="#16161a"/>
+        <text x="262" y="40" class="lbl" font-size="13">баллер</text>
+        <path d="M205,128 Q206,144 196,150" fill="none" stroke="#16161a" stroke-width="1.4"/>
+        <path d="M255,128 Q254,144 264,150" fill="none" stroke="#16161a" stroke-width="1.4"/>
+        <line x1="200" y1="146" x2="130" y2="120" class="ln-thin" stroke-width=".9"/>
+        <text x="127" y="116" class="lbl" font-size="12" text-anchor="end">галтель</text>
+        <rect x="150" y="150" width="160" height="26" fill="#6b6b74" stroke="#16161a"/>
+        <rect x="150" y="180" width="160" height="24" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="1.6"/>
+        <rect x="222" y="170" width="16" height="16" fill="#6b6b74" stroke="#16161a"/>
+        <g fill="#16161a">
+          <rect x="155" y="138" width="18" height="12"/><rect x="159" y="150" width="10" height="54"/><rect x="155" y="204" width="18" height="12"/>
+          <rect x="177" y="138" width="18" height="12"/><rect x="181" y="150" width="10" height="54"/><rect x="177" y="204" width="18" height="12"/>
+          <rect x="263" y="138" width="18" height="12"/><rect x="267" y="150" width="10" height="54"/><rect x="263" y="204" width="18" height="12"/>
+          <rect x="285" y="138" width="18" height="12"/><rect x="289" y="150" width="10" height="54"/><rect x="285" y="204" width="18" height="12"/>
+        </g>
+        <line x1="296" y1="142" x2="340" y2="120" class="ln-thin" stroke-width=".9"/>
+        <text x="343" y="117" class="lbl" font-size="12">призонные болты</text>
+        <line x1="310" y1="163" x2="348" y2="170" class="ln-thin" stroke-width=".9"/>
+        <text x="351" y="174" class="lbl" font-size="12">фланец баллера</text>
+        <line x1="310" y1="192" x2="348" y2="214" class="ln-thin" stroke-width=".9"/>
+        <text x="351" y="218" class="lbl" font-size="12">плита пера</text>
+        <line x1="160" y1="212" x2="112" y2="240" class="ln-thin" stroke-width=".9"/>
+        <text x="12" y="244" class="lbl" font-size="12">гайки со</text>
+        <text x="12" y="258" class="lbl" font-size="12">стопорением</text>
+        <rect x="140" y="204" width="180" height="160" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
+        <line x1="147" y1="204" x2="147" y2="364" stroke="#155e75" stroke-width="1"/>
+        <line x1="313" y1="204" x2="313" y2="364" stroke="#155e75" stroke-width="1"/>
+        <line x1="230" y1="204" x2="230" y2="364" stroke="#6b6b74" stroke-width="1" stroke-dasharray="5 4"/>
+        <line x1="140" y1="284" x2="320" y2="284" stroke="#6b6b74" stroke-width="1" stroke-dasharray="5 4"/>
+        <line x1="316" y1="300" x2="352" y2="292" class="ln-thin" stroke-width=".9"/>
+        <text x="355" y="296" class="lbl" font-size="12">обшивка пера</text>
+        <line x1="232" y1="336" x2="352" y2="330" class="ln-thin" stroke-width=".9"/>
+        <text x="355" y="334" class="lbl" font-size="12">диафрагмы</text>
+        <text x="230" y="388" class="lbl" fill="#155e75" font-size="13" text-anchor="middle">перо руля</text>
+      </svg>
+      <div class="caption">Узел «баллер — фланец — перо» (продольный разрез,
+      схематично). Кованый фланец баллера соединён с верхней плитой пера
+      призонными болтами, работающими на срез от M<sub>к</sub>; гайки
+      стопорятся. Плавная галтель снижает концентрацию напряжений у перехода
+      вала во фланец, центрирующий выступ разгружает болты от сдвига. Внутри
+      пера обшивку подкрепляют вертикальные и горизонтальные диафрагмы.
+      Фланцевое соединение и определяет требования к зазорам h₁, h₂ на схеме
+      компоновки: перо должно подниматься для расцепления фланца.</div>
+    </div>
+  </div>
+
   <h2>Профиль пера: NACA0020</h2>
   <p>В горизонтальном сечении перо — симметричный крыловой профиль. В работе
-  принята относительная толщина t̄ = t<sub>max</sub>/b = 0,2, то есть профиль
+  принята относительная толщина \(\bar{t} = t_{\max}/b = 0{,}2\), то есть профиль
   <b>NACA0020</b>: максимальная толщина 20 % хорды на ~30 % от носика. Полутолщина
   профиля задаётся формулой
-  y(x̄) = 5·t̄·b·(0,2969√x̄ − 0,1260x̄ − 0,3516x̄² + 0,2843x̄³ − 0,1015x̄⁴),
-  где x̄ = x/b. Радиус скругления носовой кромки R = 1,1·t̄²·b.</p>
+  $$y(\bar{x}) = 5\cdot\bar{t}\cdot b\cdot\left(0{,}2969\sqrt{\bar{x}} - 0{,}1260\,\bar{x} - 0{,}3516\,\bar{x}^{2} + 0{,}2843\,\bar{x}^{3} - 0{,}1015\,\bar{x}^{4}\right),$$
+  где \(\bar{x} = x/b\). Радиус скругления носовой кромки \(R = 1{,}1\cdot\bar{t}^{2}\cdot b\).</p>
   <div class="panel">
     <div id="naca"></div>
     <div class="caption" id="naca-cap">Профиль NACA0020, построенный по формуле.</div>
@@ -120,42 +371,47 @@
   <h2>Формулы Правил РМРС</h2>
   <div class="note">
     <p><b>Площадь пера</b> (минимально требуемая):
-    A = (L·d/100)·(1 + 50·C<sub>b</sub>²·(B/L)²), м² — L, B, d — длина, ширина
+    $$A = \dfrac{L\cdot d}{100}\cdot\left(1 + 50\cdot C_{b}^{2}\cdot\left(\dfrac{B}{L}\right)^{2}\right),\ \text{м}^2$$
+    L, B, d — длина, ширина
     и осадка судна, C<sub>b</sub> — коэффициент общей полноты. Относительное
-    удлинение λ = h/b должно быть не менее 1,5.</p>
+    удлинение \(\lambda = h/b\) должно быть не менее 1,5.</p>
     <p><b>Эффективность руля</b>:
-    E<sub>P</sub> = μ₁·(A/A₂)·(1 + C<sub>HB</sub>·A<sub>в</sub>/A)·(1 − W)² ≥
-    max(E₁, E₂, E₃), где μ₁ = 6,28/(1 + 2A/h²) — поправка на удлинение,
+    $$E_{P} = \mu_{1}\cdot\dfrac{A}{A_{2}}\cdot\left(1 + C_{HB}\cdot\dfrac{A_{\text{в}}}{A}\right)\cdot(1 - W)^{2} \ge \max(E_{1}, E_{2}, E_{3}),$$
+    где \(\mu_{1} = 6{,}28/(1 + 2A/h^{2})\) — поправка на удлинение,
     A₂ — площадь подводной части ДП, A<sub>в</sub> — часть площади пера в струе
-    винта, C<sub>HB</sub> = 9,38·T/(D<sub>в</sub>²·V₁²) — коэффициент нагрузки
-    винта (T — упор), W = 0,3·C<sub>b</sub> — попутный поток, V₁ = V·(1 − W).</p>
-    <p><b>Нагрузка на переднем ходу</b> (п. 2.2.2.1): F = F₁ + F₂, где<br>
-    F₁ = 5,59·10⁻³·k₁·k₂·(6,5 + λ)·(b₁ − C<sub>b</sub>)²·A·V² — скоростная
-    составляющая (k₁ = 1 — прямоугольное перо, k₂ = 1 — руль за винтом,
-    b₁ = 2,2 — руль в ДП, V — узлы, A — м², F₁ — кН);<br>
-    F₂ = 0,177·k₁·(6,5 + λ)·(T/D<sub>в</sub>²)·A<sub>в</sub> — добавка от струи
-    винта; минимум F₃ = k₃·A (k₃ = 18 кПа).</p>
+    винта, \(C_{HB} = 9{,}38\cdot T/(D_{\text{в}}^{2}\cdot V_{1}^{2})\) — коэффициент нагрузки
+    винта (T — упор), \(W = 0{,}3\cdot C_{b}\) — попутный поток, \(V_{1} = V\cdot(1 - W)\).</p>
+    <p><b>Нагрузка на переднем ходу</b> (п. 2.2.2.1): \(F = F_{1} + F_{2}\), где
+    $$F_{1} = 5{,}59\cdot 10^{-3}\cdot k_{1}\cdot k_{2}\cdot(6{,}5 + \lambda)\cdot(b_{1} - C_{b})^{2}\cdot A\cdot V^{2}$$
+    — скоростная
+    составляющая (\(k_{1} = 1\) — прямоугольное перо, \(k_{2} = 1\) — руль за винтом,
+    \(b_{1} = 2{,}2\) — руль в ДП, V — узлы, A — м², F₁ — кН);
+    $$F_{2} = 0{,}177\cdot k_{1}\cdot(6{,}5 + \lambda)\cdot\dfrac{T}{D_{\text{в}}^{2}}\cdot A_{\text{в}}$$
+    — добавка от струи
+    винта; минимум \(F_{3} = k_{3}\cdot A\) (\(k_{3} = 18\) кПа).</p>
     <p><b>Моменты</b>: крутящий на переднем ходу (п. 2.2.2.3)
-    M<sub>к</sub> = F·(A/h)·(0,35 − A₁/A) — здесь виден смысл балансировки:
-    чем больше носовая доля A₁/A, тем меньше плечо (0,35 − A₁/A);
+    $$M_{\text{к}} = F\cdot\dfrac{A}{h}\cdot\left(0{,}35 - \dfrac{A_{1}}{A}\right)$$
+    — здесь виден смысл балансировки:
+    чем больше носовая доля \(A_{1}/A\), тем меньше плечо \((0{,}35 - A_{1}/A)\);
     на заднем ходу (п. 2.2.2.4)
-    M<sub>з.х.</sub> = k₄·(A²/h)·(0,7 − A₁/A)·V<sub>з.х.</sub>²,
-    k₄ = 0,185, V<sub>з.х.</sub> = 0,5·V.</p>
+    $$M_{\text{з.х.}} = k_{4}\cdot\dfrac{A^{2}}{h}\cdot\left(0{,}7 - \dfrac{A_{1}}{A}\right)\cdot V_{\text{з.х.}}^{2},$$
+    \(k_{4} = 0{,}185\), \(V_{\text{з.х.}} = 0{,}5\cdot V\).</p>
     <p><b>Диаметр головы баллера</b> (п. 2.3.1):
-    d₀ = k₁₀·∛(M<sub>к</sub>/R<sub>eH</sub>), см — k₁₀ = 26,1 для переднего
+    $$d_{0} = k_{10}\cdot\sqrt[3]{\dfrac{M_{\text{к}}}{R_{eH}}},\ \text{см}$$
+    — \(k_{10} = 26{,}1\) для переднего
     хода, R<sub>eH</sub> — верхний предел текучести материала баллера, МПа.
-    Прочность проверяется по эквивалентным напряжениям σ<sub>э</sub> ≤ 0,5·R<sub>eH</sub>.</p>
+    Прочность проверяется по эквивалентным напряжениям \(\sigma_{\text{э}} \le 0{,}5\cdot R_{eH}\).</p>
     <p><b>Обшивка пера</b> (п. 2.4.1.1):
-    s = a·k₁₁·√((98·d + k₁₂·(F₁/A + k₁₃·F₂/A<sub>в</sub>))/R<sub>eH</sub>) + 1,5, мм —
-    a — меньшая сторона пластины, k₁₁ = 10,85 − 2,516·(a/b)² — по соотношению
+    $$s = a\cdot k_{11}\cdot\sqrt{\dfrac{98\cdot d + k_{12}\cdot\left(\dfrac{F_{1}}{A} + k_{13}\cdot\dfrac{F_{2}}{A_{\text{в}}}\right)}{R_{eH}}} + 1{,}5,\ \text{мм}$$
+    a — меньшая сторона пластины, \(k_{11} = 10{,}85 - 2{,}516\cdot(a/b)^{2}\) — по соотношению
     сторон, k₁₂ — по положению пластины (18,6 в носовой части 0,35b, 8 — в
-    кормовой), и не менее s<sub>min</sub> = 24·(L + 37)/(L + 240).</p>
+    кормовой), и не менее \(s_{\min} = 24\,(L + 37)/(L + 240)\).</p>
   </div>
 
   <h2>Живой расчёт</h2>
   <p>Исходные данные по умолчанию — сухогруз из курсового проекта
-  (L = 170 м, B = 24 м, d = 10 м, C<sub>b</sub> = 0,8, v = 15,3 уз,
-  D<sub>в</sub>/d = 0,6). Меняйте любое число — вся цепочка ниже, схема кормы и
+  (\(L = 170\) м, \(B = 24\) м, \(d = 10\) м, \(C_{b} = 0{,}8\), \(v = 15{,}3\) уз,
+  \(D_{\text{в}}/d = 0{,}6\)). Меняйте любое число — вся цепочка ниже, схема кормы и
   профиль пересчитаются.</p>
   <div class="panel">
     <div class="controls">
@@ -175,16 +431,45 @@
   <h2>Решение по шагам</h2>
   <p>Цепочка «формула → подстановка → результат», как в расчётной записке.
   При исходных данных по умолчанию числа совпадают с курсовым проектом:
-  A = 27,84 → 28 м², F₁ = 592,5 кН, F₂ = 776,9 кН, M<sub>к</sub> = 821,6 кН·м,
-  d₀ = 45 см, σ<sub>э</sub> = 34,4 &lt; 117,5 МПа.</p>
+  \(A = 27{,}84 \to 28\) м², \(F_{1} = 592{,}5\) кН, \(F_{2} = 776{,}9\) кН,
+  \(M_{\text{к}} = 821{,}6\) кН·м,
+  \(d_{0} = 45\) см, \(\sigma_{\text{э}} = 34{,}4 &lt; 117{,}5\) МПа.</p>
   <div class="panel"><div id="rud-steps"></div></div>
 
   <p class="small">Константы, снятые с чертежа и корпуса конкретного судна
   (площади парусности A₂…A₅, положение центров x, x₀, геометрия подвески
   баллера l₁, l₂, e, коэффициенты k₅, k₇, E₁ по рис. 2.10.3.3-1), при живом
   пересчёте сохраняются по данным работы — они помечены в шагах серым.</p>
+
+  <h2 id="contour">Автопостроение контура пера по обводам кормы</h2>
+  <p>В ручном проектировании контур пера подгоняют под кормовой подзор
+  итерациями: начертили — измерили площадь — сдвинули кромку. Этот процесс
+  автоматизируется: если обводы кормы заданы аналитически, перо можно
+  <b>вписать в кормовую оконечность автоматически</b> — построить контур между
+  подошвой ахтерштевня и подзором с монтажными зазорами, вычислить его площадь
+  по формуле Гаусса («формула шнурков») и сразу сверить с требуемой по Правилам.
+  Ниже подзор описан кубической кривой Безье (в исходном проекте обводы
+  импортируются из файла теоретического чертежа судна); четыре ползунка
+  управляют осадкой и посадкой пера, контур и площадь перестраиваются на лету.</p>
+  <div class="panel">
+    <div class="controls">
+      <label>осадка d, м <input type="range" id="ct-d" min="6" max="14" step="0.1" value="10"> <span class="readout" id="ct-d-v"></span></label>
+      <label>зазор сверху h₂, м <input type="range" id="ct-h2" min="0.15" max="1" step="0.05" value="0.3"> <span class="readout" id="ct-h2-v"></span></label>
+      <label>зазор снизу h₁, м <input type="range" id="ct-h1" min="0.2" max="1.5" step="0.05" value="0.7"> <span class="readout" id="ct-h1-v"></span></label>
+      <label>хорда b, м <input type="range" id="ct-b" min="2" max="8" step="0.1" value="4"> <span class="readout" id="ct-b-v"></span></label>
+    </div>
+    <div id="ct-badges" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"></div>
+    <div id="ct-svg"></div>
+    <div class="note" id="ct-math"></div>
+    <div class="caption">Идея автопостроения — из проекта
+    <code>ship_rudders_calcs</code> (Python: импорт обводов теоретического
+    чертежа, площади и центры фигур по многоугольникам); здесь — веб-реализация.
+    Требуемая площадь A<sub>треб</sub> считается по Правилам с L, B и
+    C<sub>b</sub> из «Живого расчёта» выше и осадкой с ползунка.</div>
+  </div>
 </main>
 <script src="assets/site.js" data-root="./" data-page="rudder"></script>
 <script src="assets/rudder.js"></script>
+<script src="assets/rudder-extra.js"></script>
 </body>
 </html>
