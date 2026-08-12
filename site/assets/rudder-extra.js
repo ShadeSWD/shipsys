@@ -17,8 +17,18 @@
       if (btn) btn.classList.toggle('on', on);
     });
   }
-  RT.forEach(k => { const b = $('rt-btn-' + k); if (b) b.addEventListener('click', () => showType(k)); });
-  if ($('rt-btn-3')) showType('3');
+  RT.forEach(k => {
+    const b = $('rt-btn-' + k);
+    if (b) b.addEventListener('click', () => {
+      showType(k);
+      const sel = $('in-rtype');
+      if (sel && sel.value !== k) { sel.value = k; sel.dispatchEvent(new Event('change')); }
+    });
+  });
+  if ($('in-rtype')) {
+    $('in-rtype').addEventListener('change', () => showType($('in-rtype').value));
+    showType($('in-rtype').value);
+  } else if ($('rt-btn-3')) showType('3');
 
   /* ============ 2. Чертёж разбивки обшивки пера на листы ============
      Раскладка — по рисунку пояснительной методики (позиции №1–№4);
@@ -39,7 +49,8 @@
     const Yb = yTop + h * sc;
     const Y = z => Yb - z * sc;
     const F = v => v.toFixed(1);
-    const seam = 0.35 * b, ax = 0.2 * b;
+    const a1 = (window.rudderCalc && window.rudderCalc.i.rt) ? window.rudderCalc.i.rt.a1 : 0.2;
+    const seam = 0.35 * b, ax = Math.max(0.05, a1) * b;   // ось баллера: балансирная доля
     const d1 = Math.max(0.06 * b, ax - 0.5), d2 = Math.min(seam - 0.08, ax + 0.5);
     const dv = []; // кормовые диафрагмы, шаг 0,6 м от стыка зон
     for (let x = seam + 0.6; x < b - 0.25; x += 0.6) dv.push(x);
@@ -134,6 +145,7 @@
       </div>`).join('');
   }
   document.addEventListener('rudder:update', renderPlating);
+  document.addEventListener('rudder:update', () => { try { render(); } catch (e) { /* контур строится позже */ } });
   renderPlating();
 
   /* ============ 3. Автопостроение контура пера ============ */
@@ -206,7 +218,8 @@
     const { A, S } = shoelace(P);
     const bMean = c.b, hMean = A / bMean, lam = hMean / bMean;
     const Areq = m.L * c.d / 100 * (1 + 50 * m.Cb * m.Cb * Math.pow(m.B / m.L, 2));
-    const xax = xle + 0.2 * c.b;
+    const rt = (window.rudderCalc && window.rudderCalc.i.rt) || { a1: 0.2, name: 'полуподвесной на кронштейне' };
+    const xax = xle + Math.max(0.05, rt.a1) * c.b;   // ось баллера: балансирная доля типа
 
     // --- SVG ---
     const ctPts = CT.map(p => `${X(p.x).toFixed(1)},${Y(p.z).toFixed(1)}`).join(' ');
@@ -243,6 +256,20 @@
       <line x1="${X(-2.8)}" y1="${Y(3.4).toFixed(1)}" x2="${X(-1.0)}" y2="${Y(3.4).toFixed(1)}" stroke="#6b6b74" stroke-width="8"/>
       <ellipse cx="${X(-0.55).toFixed(1)}" cy="${Y(3.4).toFixed(1)}" rx="8" ry="75" fill="rgba(179,56,46,.13)" stroke="#b3382e" stroke-width="1.4"/>
       <circle cx="${X(-0.55).toFixed(1)}" cy="${Y(3.4).toFixed(1)}" r="7" fill="#b3382e"/>
+      <!-- нижняя опора зависит от типа руля -->
+      ${rt.a1 === 0 ? `
+      <line x1="${X(xle).toFixed(1)}" y1="${Y(c.h1).toFixed(1)}" x2="${X(xle).toFixed(1)}" y2="${Y(zCounter(xle) - c.h2).toFixed(1)}"
+            stroke="#1a7f37" stroke-width="4"/>
+      ${[0.25, 0.55, 0.85].map(t => {
+        const z = c.h1 + t * (zCounter(xle) - c.h2 - c.h1);
+        return `<circle cx="${X(xle).toFixed(1)}" cy="${Y(z).toFixed(1)}" r="5" fill="#fff" stroke="#1a7f37" stroke-width="2"/>`;
+      }).join('')}
+      <text x="${(X(xle) - 12).toFixed(1)}" y="${(Y(c.h1) + 22).toFixed(1)}" class="lbl" fill="#1a7f37" font-size="12" text-anchor="end">петли на рудерпосте</text>`
+      : rt.a1 >= 0.25 ? `
+      <text x="${X(xle + c.b / 2).toFixed(1)}" y="${(Y(c.h1) + 26).toFixed(1)}" class="lbl" fill="#1a7f37" font-size="12" text-anchor="middle">низ пера свободен — опора только на баллере</text>`
+      : `
+      <circle cx="${X(xax).toFixed(1)}" cy="${Y(c.h1).toFixed(1)}" r="6" fill="#fff" stroke="#1a7f37" stroke-width="2.2"/>
+      <text x="${(X(xax) + 12).toFixed(1)}" y="${(Y(c.h1) + 18).toFixed(1)}" class="lbl" fill="#1a7f37" font-size="12">штырь в пятке (нижняя опора)</text>`}
       <!-- перо -->
       <polygon points="${bladePts}" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
       ${dots}
