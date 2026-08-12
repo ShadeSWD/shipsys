@@ -225,6 +225,9 @@
     renderSteps(i, r);
     renderSvg(i, r);
     renderNaca(i, r);
+    // экспорт результатов для сопутствующих схем (чертёж разбивки обшивки и др.)
+    window.rudderCalc = { i, r };
+    document.dispatchEvent(new CustomEvent('rudder:update'));
   }
 
   ['in-L','in-B','in-d','in-Cb','in-v','in-dvd','in-h','in-T','in-d0']
