@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Осушительная система: диаметры труб и подбор насоса</title>
+<meta name="description" content="Расчёт осушительной системы судна: диаметры магистрали и приёмных отростков по правилам, подача насоса, потери напора во всасывающей и нагнетательной ветвях, проверка допустимой вакуумметрической высоты.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap">
+  <h1>Осушительная система: диаметры труб и подбор насоса</h1>
+  <p class="lead">Осушительная система удаляет за борт воду, скапливающуюся
+  в трюмах и отсеках при мойке, отпотевании, малых течах и после тушения
+  пожара. Её проектирование — задача с жёстким внешним ограничением: диаметры
+  труб задаются <b>правилами классификационного общества</b> по размерениям
+  судна, а насос подбирается по каталогу так, чтобы обеспечить требуемую
+  подачу и при этом не «сорвать» всасывание — разрежение перед насосом не
+  должно превысить допустимую вакуумметрическую высоту.</p>
+
+  <h2>1. Диаметры по правилам</h2>
+  <p>Диаметр осушительной магистрали и приёмных отростков определяют по
+  главным размерениям (в миллиметрах):</p>
+  $$d_{\text{м}} = 1{,}68\sqrt{L\,(B + D)} + 25, \qquad
+    d_{0} = 2{,}15\sqrt{l\,(B + D)} + 25,$$
+  <p>где \(L, B, D\) — длина, ширина и высота борта судна, м;
+  \(l\) — длина осушаемого отсека по днищу, м. Отросток к клапанной коробке,
+  собирающий несколько приёмников, проверяется по условию</p>
+  $$d_{\text{м}} \geqslant d_{0} \geqslant \sqrt{d_{01}^{2} + d_{02}^{2} + \dots},$$
+  <p>то есть суммарная площадь сечения приёмников не должна превышать
+  площадь собирающей трубы. Подача осушительного насоса связана с диаметром
+  магистрали:</p>
+  $$Q_{\text{н}} \geqslant \dfrac{5{,}65}{10^{3}}\,d_{\text{м}}^{2}, \quad \text{м}^3/\text{ч}.$$
+  <p class="small">Нормативные ограничения: диаметр магистрали не менее 50 мм,
+  приёмных отростков не менее 60 мм; скорость воды в трубопроводе не выше
+  2,5 м/с; допустимая вакуумметрическая высота всасывания 5–6 м вод. ст.;
+  напор насоса обычно 20–30 м вод. ст.</p>
+
+  <h2>2. Потери напора</h2>
+  <p>Для каждого участка потери складываются из потерь по длине и местных:</p>
+  $$H_{i} = \left(\lambda\,\dfrac{l_i}{d} + \sum\zeta\right)\dfrac{v^{2}}{2g},
+    \qquad v = \dfrac{4Q}{\pi d^{2}}, \qquad Re = \dfrac{v\,d}{\nu},$$
+  <p>коэффициент трения для технически гладких труб систем:</p>
+  $$\lambda = 0{,}0032 + 0{,}221\,Re^{-0{,}237}.$$
+  <p>Суммарный требуемый напор всасывающей ветви сравнивают с допустимым
+  разрежением: если \(H^{\text{тр}}_{\text{вс}} > H^{\text{доп}}_{\text{вак}}\),
+  диаметры увеличивают на ближайший размер сортамента и расчёт повторяют —
+  это и есть рабочая итерация проектирования системы.</p>
+
+  <h2>3. Расчёт</h2>
+  <div class="panel">
+    <div class="controls" style="font-size:13.5px">
+      <label>L, м <input type="number" id="dr-L" value="81.7" step="0.1" style="width:5.5em"></label>
+      <label>B, м <input type="number" id="dr-B" value="14.1" step="0.1" style="width:5em"></label>
+      <label>D, м <input type="number" id="dr-D" value="7.7" step="0.1" style="width:5em"></label>
+      <label>l отсека, м <input type="number" id="dr-l" value="14.0" step="0.1" style="width:5em"></label>
+      <label>приёмников <input type="number" id="dr-n" value="2" min="1" max="4" step="1" style="width:4em"></label>
+      <label>Q насоса, м³/ч <input type="number" id="dr-Q" value="63" step="1" style="width:5.5em"></label>
+      <label>d участка, мм <input type="number" id="dr-d" value="72" step="1" style="width:5em"></label>
+      <label>длина участка, м <input type="number" id="dr-lu" value="21.4" step="0.1" style="width:5.5em"></label>
+      <label>Σζ <input type="number" id="dr-z" value="6.1" step="0.1" style="width:4.5em"></label>
+      <label>t воды, °C <input type="number" id="dr-t" value="10" step="1" style="width:4.5em"></label>
+    </div>
+    <div id="dr-out"></div>
+  </div>
+
+  <h2>4. Схема системы</h2>
+  <svg viewBox="0 0 640 280" class="geo-board" style="max-width:640px">
+    <!-- корпус и отсеки -->
+    <path d="M 30 60 L 610 60 L 610 210 Q 610 236 578 240 L 62 240 Q 30 236 30 210 Z"
+          fill="rgba(22,22,26,.03)" stroke="#16161a" stroke-width="1.8"/>
+    <line x1="200" y1="60" x2="200" y2="238" stroke="#16161a" stroke-width="1.4"/>
+    <line x1="380" y1="60" x2="380" y2="240" stroke="#16161a" stroke-width="1.4"/>
+    <text x="105" y="86" text-anchor="middle" style="font:11.5px system-ui;fill:#6b6b74">носовой отсек</text>
+    <text x="290" y="86" text-anchor="middle" style="font:11.5px system-ui;fill:#6b6b74">трюм</text>
+    <text x="495" y="86" text-anchor="middle" style="font:11.5px system-ui;fill:#6b6b74">машинное отделение</text>
+    <!-- льяльная вода -->
+    <path d="M 34 224 L 196 224 L 196 236 L 34 236 Z" fill="rgba(21,94,117,.22)"/>
+    <path d="M 204 226 L 376 226 L 376 236 L 204 236 Z" fill="rgba(21,94,117,.16)"/>
+    <!-- приёмники -->
+    <g stroke="#155e75" stroke-width="2" fill="none">
+      <path d="M 80 224 L 80 150"/><path d="M 150 224 L 150 150"/>
+      <path d="M 290 226 L 290 150"/>
+    </g>
+    <g fill="#fff" stroke="#155e75" stroke-width="1.6">
+      <rect x="72" y="212" width="16" height="10" rx="2"/>
+      <rect x="142" y="212" width="16" height="10" rx="2"/>
+      <rect x="282" y="214" width="16" height="10" rx="2"/>
+    </g>
+    <text x="80" y="206" text-anchor="middle" style="font:10px system-ui;fill:#155e75">приёмник</text>
+    <text x="150" y="206" text-anchor="middle" style="font:10px system-ui;fill:#155e75">приёмник</text>
+    <!-- клапанная коробка и магистраль -->
+    <rect x="100" y="132" width="34" height="18" rx="3" fill="#eceae3" stroke="#16161a" stroke-width="1.4"/>
+    <text x="117" y="128" text-anchor="middle" style="font:10px system-ui;fill:#3a3a42">клапанная коробка</text>
+    <line x1="117" y1="132" x2="117" y2="118" stroke="#155e75" stroke-width="2.4"/>
+    <line x1="117" y1="118" x2="470" y2="118" stroke="#155e75" stroke-width="3"/>
+    <line x1="290" y1="150" x2="290" y2="118" stroke="#155e75" stroke-width="2"/>
+    <text x="250" y="112" style="font:11px system-ui;fill:#155e75">осушительная магистраль d_м</text>
+    <!-- насос и выброс за борт -->
+    <circle cx="500" cy="118" r="16" fill="#fff" stroke="#b3382e" stroke-width="2"/>
+    <text x="500" y="123" text-anchor="middle" style="font:12px system-ui;fill:#b3382e">Н</text>
+    <text x="500" y="98" text-anchor="middle" style="font:10.5px system-ui;fill:#b3382e">насос</text>
+    <line x1="516" y1="118" x2="586" y2="118" stroke="#155e75" stroke-width="2.4"/>
+    <line x1="586" y1="118" x2="586" y2="70" stroke="#155e75" stroke-width="2.4"/>
+    <path d="M 586 62 l -5 10 l 10 0 z" fill="#155e75"/>
+    <text x="592" y="76" style="font:10.5px system-ui;fill:#155e75">за борт</text>
+    <text x="30" y="266" style="font:11px system-ui;fill:#6b6b74">приёмники в льялах → клапанная коробка → магистраль → осушительный насос → отливной патрубок</text>
+  </svg>
+  <p class="small">Схема принципиальная: показаны два приёмника осушаемого
+  отсека, сборная клапанная коробка, магистраль и насос. Расчёт выше ведётся
+  для одной ветви — от дальнего приёмника до насоса.</p>
+
+  <p><a href="hydraulics">← Гидравлика судовых систем</a> ·
+  <a href="https://shadeswd.duckdns.org/mzg/theory">теория течения в трубах</a></p>
+</main>
+<script src="assets/site.js" data-root="./" data-page="drainage"></script>
+<script>
+'use strict';
+(function () {
+  const $ = id => document.getElementById(id);
+  const N = (x, d = 2) => isFinite(x)
+    ? x.toLocaleString('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+  const G = 9.81;
+  /* кинематическая вязкость пресной воды по температуре, м²/с */
+  const NU = t => 1.78e-6 / (1 + 0.0337 * t + 0.000221 * t * t);
+  /* ряд труб систем (наружный диаметр × толщина → внутренний), мм */
+  const PIPES = [[57, 3.5], [70, 4], [80, 4], [95, 5], [110, 5], [110, 6], [135, 5], [160, 5], [180, 6]];
+  const pick = dmin => {
+    for (const [D, s] of PIPES) { const din = D - 2 * s; if (din >= dmin) return { D, s, din }; }
+    const [D, s] = PIPES[PIPES.length - 1]; return { D, s, din: D - 2 * s };
+  };
+  const row = (f, sub, res) =>
+    `<div style="margin:5px 0;font:14px system-ui"><span style="color:#3a3a42">${f}</span>` +
+    (sub ? ` = <span style="color:#6b6b74">${sub}</span>` : '') + ` = <b>${res}</b></div>`;
+
+  function calc() {
+    const L = +$('dr-L').value, B = +$('dr-B').value, D = +$('dr-D').value,
+      l = +$('dr-l').value, n = Math.max(1, +$('dr-n').value),
+      Q = +$('dr-Q').value, dIn = +$('dr-d').value, lu = +$('dr-lu').value,
+      zeta = +$('dr-z').value, t = +$('dr-t').value;
+
+    const dm = 1.68 * Math.sqrt(L * (B + D)) + 25;
+    const d0 = 2.15 * Math.sqrt(l * (B + D)) + 25;
+    const dCol = d0 * Math.sqrt(n);                 // собирающий отросток
+    const pm = pick(dm), p0 = pick(d0), pc = pick(dCol);
+    // подача считается по ПРИНЯТОМУ внутреннему диаметру магистрали
+    const Qreq = 5.65e-3 * pm.din * pm.din;
+    const Qb = Q / n;                                // на один приёмник
+    const d = dIn / 1000;
+    const v = 4 * (Qb / 3600) / (Math.PI * d * d);
+    const nu = NU(t);
+    const Re = v * d / nu;
+    const lam = 0.0032 + 0.221 * Math.pow(Re, -0.237);
+    const H = (lam * lu / d + zeta) * v * v / (2 * G);
+
+    const o = [];
+    o.push('<h4 style="margin:6px 0 2px">Шаг 1. Диаметры по правилам</h4>');
+    o.push(row('d_м = 1,68·√(L(B+D)) + 25',
+      `1,68·√(${N(L, 1)}·(${N(B, 1)}+${N(D, 1)})) + 25`, `${N(dm, 1)} мм → труба ${pm.D}×${pm.s} (внутр. ${pm.din} мм)`));
+    o.push(row('d₀ = 2,15·√(l(B+D)) + 25',
+      `2,15·√(${N(l, 1)}·(${N(B, 1)}+${N(D, 1)})) + 25`, `${N(d0, 1)} мм → труба ${p0.D}×${p0.s} (внутр. ${p0.din} мм)`));
+    o.push(row(`собирающий отросток: d ≥ √(${n}·d₀²)`,
+      `√(${n})·${N(d0, 1)}`, `${N(dCol, 1)} мм → труба ${pc.D}×${pc.s} (внутр. ${pc.din} мм)`));
+    o.push(row('Q_н ≥ 5,65·10⁻³·d_м² (по принятой трубе)', `5,65·10⁻³·${pm.din}²`, `${N(Qreq, 1)} м³/ч`));
+    const okQ = Q >= Qreq;
+    o.push(`<div class="badge ${okQ ? 'ok' : 'bad'}">насос ${N(Q, 0)} м³/ч ${okQ ? '≥' : '<'} требуемых ${N(Qreq, 1)} м³/ч</div>`);
+
+    o.push('<h4 style="margin:10px 0 2px">Шаг 2. Скорость и режим в ветви</h4>');
+    o.push(row('на один приёмник Q_в = Q/n', `${N(Q, 0)}/${n}`, `${N(Qb, 1)} м³/ч`));
+    o.push(row('v = 4Q_в/(πd²)', `4·${N(Qb / 3600, 4)}/(π·${N(d, 3)}²)`, `${N(v, 2)} м/с`));
+    const okV = v <= 2.5;
+    o.push(`<div class="badge ${okV ? 'ok' : 'bad'}">скорость ${okV ? 'в норме' : 'выше'} предела 2,5 м/с</div>`);
+    o.push(row('ν(t)', `вода ${N(t, 0)} °C`, `${nu.toExponential(3)} м²/с`));
+    o.push(row('Re = v·d/ν', `${N(v, 2)}·${N(d, 3)}/${nu.toExponential(2)}`, `${Re.toExponential(3)}`));
+    o.push(row('λ = 0,0032 + 0,221·Re^(−0,237)', `0,0032 + 0,221·${Re.toExponential(2)}^(−0,237)`, N(lam, 4)));
+
+    o.push('<h4 style="margin:10px 0 2px">Шаг 3. Потери напора на участке</h4>');
+    o.push(row('H = (λ·l/d + Σζ)·v²/2g',
+      `(${N(lam, 4)}·${N(lu, 1)}/${N(d, 3)} + ${N(zeta, 1)})·${N(v, 2)}²/(2·9,81)`,
+      `${N(H, 2)} м вод. ст.`));
+    const okH = H <= 6;
+    o.push(`<div class="badge ${okH ? 'ok' : 'bad'}">${okH
+      ? `потери ${N(H, 2)} м ≤ допустимого разрежения 6 м вод. ст.`
+      : `потери ${N(H, 2)} м > 6 м вод. ст. — увеличьте диаметр участка до следующего размера сортамента`}</div>`);
+    $('dr-out').innerHTML = o.join('');
+  }
+  ['dr-L', 'dr-B', 'dr-D', 'dr-l', 'dr-n', 'dr-Q', 'dr-d', 'dr-lu', 'dr-z', 'dr-t']
+    .forEach(id => $(id).addEventListener('input', calc));
+  calc();
+})();
+</script>
+</body>
+</html>

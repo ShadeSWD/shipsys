@@ -9,6 +9,7 @@
     { href: '', key: 'index', title: 'Обзор' },
     { href: 'rudder', key: 'rudder', title: 'Рулевое устройство' },
     { href: 'hydraulics', key: 'hydraulics', title: 'Гидравлика систем' },
+    { href: 'drainage', key: 'drainage', title: 'Осушительная система' },
     { href: 'sources', key: 'sources', title: 'Источники' },
   ];
   const header = document.createElement('header');
