@@ -41,7 +41,17 @@
     const box = $('pl-svg');
     if (!box || !window.rudderCalc) return;
     const { i, r } = window.rudderCalc;
-    const h = i.h, b = r.b;
+    // контур пера, построенный по обводам кормы (раздел выше). Если он ещё не
+    // построен — работаем по прямоугольнику h×b из расчёта.
+    const ct = window.rudderContour;
+    let b, h, outline = null;
+    if (ct && ct.P && ct.P.length > 3) {
+      b = ct.b;
+      h = ct.hmax;
+      outline = ct.P.map(pt => ({ x: pt.x - ct.xle, z: pt.z - ct.h1 }));
+    } else {
+      h = i.h; b = r.b;
+    }
     if (!(h > 1.5 && b > 1)) { box.innerHTML = ''; return; }
     const sc = Math.min(62, 440 / h, 420 / b);
     const x0 = 110, yTop = 36;
@@ -49,6 +59,21 @@
     const Yb = yTop + h * sc;
     const Y = z => Yb - z * sc;
     const F = v => v.toFixed(1);
+    const zTop = xl => {   // верхняя кромка контура в сечении xl (м от носовой кромки)
+      if (!outline) return h;
+      let best = 0;
+      for (const pt of outline) if (Math.abs(pt.x - xl) < 0.25 && pt.z > best) best = pt.z;
+      if (best) return best;
+      // линейная интерполяция по верхней ветви
+      const up = outline.filter(pt => pt.z > 0.01).sort((a, c) => a.x - c.x);
+      for (let k = 1; k < up.length; k++) {
+        if (up[k].x >= xl) {
+          const a = up[k - 1], c = up[k];
+          return a.z + (xl - a.x) * (c.z - a.z) / ((c.x - a.x) || 1);
+        }
+      }
+      return h;
+    };
     const a1 = (window.rudderCalc && window.rudderCalc.i.rt) ? window.rudderCalc.i.rt.a1 : 0.2;
     const seam = 0.35 * b, ax = Math.max(0.05, a1) * b;   // ось баллера: балансирная доля
     const d1 = Math.max(0.06 * b, ax - 0.5), d2 = Math.min(seam - 0.08, ax + 0.5);
@@ -62,6 +87,15 @@
       ? `<line x1="${F(x - 4)}" y1="${F(y)}" x2="${F(x + 4)}" y2="${F(y)}" stroke="#16161a" stroke-width="1"/>`
       : `<line x1="${F(x)}" y1="${F(y - 4)}" x2="${F(x)}" y2="${F(y + 4)}" stroke="#16161a" stroke-width="1"/>`;
 
+    // обрезка по реальному контуру пера
+    const clipId = 'plclip';
+    if (outline) {
+      const pts = outline.map(pt => `${F(X(pt.x))},${F(Y(pt.z))}`).join(' ');
+      g.push(`<clipPath id="${clipId}"><polygon points="${pts}"/></clipPath>`);
+      g.push(`<g clip-path="url(#${clipId})">`);
+    } else {
+      g.push('<g>');
+    }
     // заливки зон (№3, №4 поверх №2)
     g.push(`<rect x="${F(X(seam))}" y="${F(yTop)}" width="${F((b - seam) * sc)}" height="${F(h * sc)}" fill="rgba(21,94,117,${PL_OP[0]})"/>`);
     g.push(`<rect x="${F(X(0))}" y="${F(yTop)}" width="${F(seam * sc)}" height="${F(h * sc)}" fill="rgba(21,94,117,${PL_OP[1]})"/>`);
@@ -75,18 +109,26 @@
       `<line x1="${F(X(x))}" y1="${F(yTop)}" x2="${F(X(x))}" y2="${F(Yb)}" stroke="#16161a" stroke-width="1.2"/>`));
     // сварной стык зон 0,35b
     g.push(`<line x1="${F(X(seam))}" y1="${F(yTop)}" x2="${F(X(seam))}" y2="${F(Yb)}" stroke="#b3382e" stroke-width="1.4" stroke-dasharray="7 4"/>`);
-    g.push(`<text transform="rotate(-90 ${F(X(seam) - 6)} ${F(yTop + h * sc / 2)})" x="${F(X(seam) - 6)}" y="${F(yTop + h * sc / 2)}" class="lbl" fill="#b3382e" font-size="11" text-anchor="middle">стык носовой и кормовой зон</text>`);
-    // контур пера
-    g.push(`<rect x="${F(x0)}" y="${F(yTop)}" width="${F(b * sc)}" height="${F(h * sc)}" fill="none" stroke="#155e75" stroke-width="2.2"/>`);
+    g.push(`<text transform="rotate(-90 ${F(X(seam) - 6)} ${F(yTop + h * sc / 2)})" x="${F(X(seam) - 6)}" y="${F(yTop + h * sc / 2)}" class="lbl" fill="#b3382e" font-size="11" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round">стык носовой и кормовой зон</text>`);
+    g.push('</g>');   // конец обрезки по контуру
+    // контур пера — реальный, из автопостроения по обводам кормы
+    if (outline) {
+      const pts = outline.map(pt => `${F(X(pt.x))},${F(Y(pt.z))}`).join(' ');
+      g.push(`<polygon points="${pts}" fill="none" stroke="#155e75" stroke-width="2.2"/>`);
+    } else {
+      g.push(`<rect x="${F(x0)}" y="${F(yTop)}" width="${F(b * sc)}" height="${F(h * sc)}" fill="none" stroke="#155e75" stroke-width="2.2"/>`);
+    }
     // ось баллера и баллер
     g.push(`<line x1="${F(X(ax))}" y1="${F(yTop - 30)}" x2="${F(X(ax))}" y2="${F(Yb + 4)}" stroke="#1a7f37" stroke-width="1" stroke-dasharray="7 4"/>`);
     g.push(`<rect x="${F(X(ax) - 5)}" y="${F(yTop - 26)}" width="10" height="26" fill="#6b6b74"/>`);
     g.push(`<text x="${F(X(ax) + 9)}" y="${F(yTop - 12)}" class="lbl" fill="#1a7f37" font-size="12">ось баллера</text>`);
     // подписи зон
-    g.push(`<text x="${F(X(seam + (b - seam) / 2))}" y="${F(Y(0.55 * h))}" class="lbl" font-size="14" text-anchor="middle">№1 · s = ${p[0].acc} мм</text>`);
-    g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(0.58 * h))}" class="lbl" font-size="14" text-anchor="middle">№2</text>`);
-    g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(0.58 * h) + 18)}" class="lbl" font-size="12" text-anchor="middle">s = ${p[1].acc} мм</text>`);
-    g.push(`<text x="${F(X((d1 + d2) / 2))}" y="${F(Y(0.42))}" class="lbl" font-size="11" text-anchor="middle">№3 · s = ${p[2].acc} мм</text>`);
+    const zc1 = 0.55 * zTop(seam + (b - seam) / 2), zc2 = 0.58 * zTop(seam / 2);
+    const halo = 'paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round';
+    g.push(`<text x="${F(X(seam + (b - seam) / 2))}" y="${F(Y(zc1))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№1 · s = ${p[0].acc} мм</text>`);
+    g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(zc2))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№2</text>`);
+    g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(zc2) + 18)}" class="lbl" font-size="12" text-anchor="middle" style="${halo}">s = ${p[1].acc} мм</text>`);
+    g.push(`<text x="${F(X((d1 + d2) / 2))}" y="${F(Y(0.42))}" class="lbl" font-size="11" text-anchor="middle" style="${halo}">№3 · s = ${p[2].acc} мм</text>`);
     // №4 — выноска влево
     g.push(`<line x1="${F(X(d1 / 2))}" y1="${F(Y(0.3))}" x2="${F(x0 - 18)}" y2="${F(Y(1.15))}" class="ln-thin" stroke-width=".9"/>`);
     g.push(`<text x="${F(x0 - 22)}" y="${F(Y(1.15) - 2)}" class="lbl" font-size="12" text-anchor="end">№4</text>`);
@@ -130,7 +172,7 @@
     g.push(`<line x1="${F(x0)}" y1="${F(Yb + 44)}" x2="${F(X(b))}" y2="${F(Yb + 44)}" class="ln-dim"/>`);
     g.push(`<text x="${F(X(b / 2))}" y="${F(Yb + 60)}" class="lbl-dim" font-size="12" text-anchor="middle">b = ${N(b, 1)} м</text>`);
     g.push(`<line x1="${F(x0 - 26)}" y1="${F(yTop)}" x2="${F(x0 - 26)}" y2="${F(Yb)}" class="ln-dim"/>`);
-    g.push(`<text transform="rotate(-90 ${F(x0 - 32)} ${F(yTop + h * sc / 2)})" x="${F(x0 - 32)}" y="${F(yTop + h * sc / 2)}" class="lbl-dim" font-size="12" text-anchor="middle">h = ${N(h, 1)} м</text>`);
+    g.push(`<text transform="rotate(-90 ${F(x0 - 32)} ${F(yTop + h * sc / 2)})" x="${F(x0 - 32)}" y="${F(yTop + h * sc / 2)}" class="lbl-dim" font-size="12" text-anchor="middle">${outline ? 'h_max' : 'h'} = ${N(h, 1)} м</text>`);
 
     box.innerHTML = `<svg viewBox="0 0 560 545" class="geo-board" style="max-width:560px" role="img"
       aria-label="Чертёж разбивки обшивки пера руля на листы с силовым набором">${g.join('\n')}</svg>`;
@@ -145,6 +187,7 @@
       </div>`).join('');
   }
   document.addEventListener('rudder:update', renderPlating);
+  document.addEventListener('rudder:contour', renderPlating);
   document.addEventListener('rudder:update', () => { try { render(); } catch (e) { /* контур строится позже */ } });
   renderPlating();
 
@@ -216,6 +259,12 @@
     const P = [{ x: xle, z: c.h1 }, { x: xte, z: c.h1 }].concat(top.slice().reverse());
     const squeezed = top.some(p => p.z <= c.h1 + 0.5);
     const { A, S } = shoelace(P);
+    // отдаём контур наружу: по нему строится разбивка обшивки на листы
+    window.rudderContour = {
+      P, xle, xte, h1: c.h1, b: c.b, A,
+      hmax: Math.max.apply(null, P.map(pt => pt.z - c.h1)),
+    };
+    document.dispatchEvent(new CustomEvent('rudder:contour'));
     const bMean = c.b, hMean = A / bMean, lam = hMean / bMean;
     const Areq = m.L * c.d / 100 * (1 + 50 * m.Cb * m.Cb * Math.pow(m.B / m.L, 2));
     const rt = (window.rudderCalc && window.rudderCalc.i.rt) || { a1: 0.2, name: 'полуподвесной на кронштейне' };
