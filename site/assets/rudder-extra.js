@@ -123,7 +123,12 @@
     g.push(`<rect x="${F(X(ax) - 5)}" y="${F(yTop - 26)}" width="10" height="26" fill="#6b6b74"/>`);
     g.push(`<text x="${F(X(ax) + 9)}" y="${F(yTop - 12)}" class="lbl" fill="#1a7f37" font-size="12">ось баллера</text>`);
     // подписи зон
-    const zc1 = 0.55 * zTop(seam + (b - seam) / 2), zc2 = 0.58 * zTop(seam / 2);
+    // подпись №1 поднимаем над размерной клеткой типоразмера (у прямоугольного
+    // пера верхняя кромка ниже, и метка иначе легла бы на выноску)
+    const zTop1 = zTop(seam + (b - seam) / 2);
+    const cellTop = rh.length >= 5 ? rh[4] : 0;
+    const zc1 = Math.min(0.92 * zTop1, Math.max(0.55 * zTop1, cellTop + 0.6));
+    const zc2 = 0.58 * zTop(seam / 2);
     const halo = 'paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round';
     g.push(`<text x="${F(X(seam + (b - seam) / 2))}" y="${F(Y(zc1))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№1 · s = ${p[0].acc} мм</text>`);
     g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(zc2))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№2</text>`);
@@ -172,7 +177,7 @@
     g.push(`<line x1="${F(x0)}" y1="${F(Yb + 44)}" x2="${F(X(b))}" y2="${F(Yb + 44)}" class="ln-dim"/>`);
     g.push(`<text x="${F(X(b / 2))}" y="${F(Yb + 60)}" class="lbl-dim" font-size="12" text-anchor="middle">b = ${N(b, 1)} м</text>`);
     g.push(`<line x1="${F(x0 - 26)}" y1="${F(yTop)}" x2="${F(x0 - 26)}" y2="${F(Yb)}" class="ln-dim"/>`);
-    g.push(`<text transform="rotate(-90 ${F(x0 - 32)} ${F(yTop + h * sc / 2)})" x="${F(x0 - 32)}" y="${F(yTop + h * sc / 2)}" class="lbl-dim" font-size="12" text-anchor="middle">${outline ? 'h_max' : 'h'} = ${N(h, 1)} м</text>`);
+    g.push(`<text transform="rotate(-90 ${F(x0 - 32)} ${F(yTop + h * sc / 2)})" x="${F(x0 - 32)}" y="${F(yTop + h * sc / 2)}" class="lbl-dim" font-size="12" text-anchor="middle">${outline && ct.shape !== 'rect' ? 'h_max' : 'h'} = ${N(h, 1)} м</text>`);
 
     box.innerHTML = `<svg viewBox="0 0 560 545" class="geo-board" style="max-width:560px" role="img"
       aria-label="Чертёж разбивки обшивки пера руля на листы с силовым набором">${g.join('\n')}</svg>`;
@@ -312,7 +317,7 @@
     // отвергнутый / неиспользованный вариант — тонким пунктиром, для сравнения
     const halo = 'paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round';
     let ghost = '';
-    if (!rect && hRect > 0.2) {
+    if (!rect && hRect > 0.2 && zmin < top[NP].z - 0.05) {
       const gp = Prect.map(p => `${X(p.x).toFixed(1)},${Y(p.z).toFixed(1)}`).join(' ');
       ghost = `<polygon points="${gp}" fill="none" stroke="#6b6b74" stroke-width="1.2" stroke-dasharray="6 4"/>
       <text x="${(X(xte) + 6).toFixed(1)}" y="${(Y(zTopR) + 4).toFixed(1)}" class="lbl gray"
