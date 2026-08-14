@@ -231,8 +231,15 @@
     return { A: Math.abs(s) / 2, S: s, terms };
   }
 
+  const HMIN = 0.5;   // конструктивный минимум высоты пера, м (иначе перо зажато)
+
   function ctrInputs() {
-    return { d: +$('ct-d').value, h2: +$('ct-h2').value, h1: +$('ct-h1').value, b: +$('ct-b').value };
+    const sh = $('ct-shape');
+    return {
+      d: +$('ct-d').value, h2: +$('ct-h2').value,
+      h1: +$('ct-h1').value, b: +$('ct-b').value,
+      shape: (sh && sh.value) || 'auto',
+    };
   }
   function mainInputs() { // L, B, Cb — из «Живого расчёта» выше
     const g = id => { const el = $(id); const v = el ? +el.value : NaN; return isFinite(v) && v > 0 ? v : NaN; };
@@ -246,27 +253,45 @@
     $('ct-h1-v').textContent = N(c.h1, 2);
     $('ct-b-v').textContent = N(c.b, 1);
 
-    // контур пера: низ — над подошвой на h1, верх — подзор минус h2 (не выше ЛГВЛ)
+    // требуемая площадь по Правилам — критерий выбора формы пера
+    const Areq = m.L * c.d / 100 * (1 + 50 * m.Cb * m.Cb * Math.pow(m.B / m.L, 2));
+
+    // верхняя кромка по обводам: подзор минус зазор h2, но не выше ЛГВЛ
     const xle = 0.8, xte = xle + c.b, NP = 22;
     const top = [];
-    let capped = false;
+    let capped = false, zmin = Infinity, zcMin = Infinity, xg = xle;
     for (let i = 0; i <= NP; i++) {
       const x = xle + (xte - xle) * i / NP;
       const zc = zCounter(x) - c.h2;
       if (zc > c.d) capped = true;
-      top.push({ x, z: Math.min(zc, c.d) });
+      if (zCounter(x) < zcMin) zcMin = zCounter(x);
+      const z = Math.min(zc, c.d);
+      if (z < zmin) { zmin = z; xg = x; }   // самое низкое место подзора в пределах хорды
+      top.push({ x, z });
     }
-    const P = [{ x: xle, z: c.h1 }, { x: xte, z: c.h1 }].concat(top.slice().reverse());
-    const squeezed = top.some(p => p.z <= c.h1 + 0.5);
+    // вариант 1 — прямоугольник: h = (мин. высота подзора над подошвой) − h₂ − h₁
+    const hRect = zmin - c.h1;
+    const ARect = Math.max(0, hRect) * c.b;
+    const zTopR = c.h1 + Math.max(hRect, 0.05);     // защита от вырожденного контура
+    const fits = hRect >= HMIN;                     // помещается между подошвой и подзором
+    const enough = ARect >= Areq - 1e-9;            // набирает требуемую площадь
+    // вариант 2 — контур со срезанной по подзору верхней кромкой (как в ручной подгонке)
+    const Pcurve = [{ x: xle, z: c.h1 }, { x: xte, z: c.h1 }].concat(top.slice().reverse());
+    const Prect = [{ x: xle, z: c.h1 }, { x: xte, z: c.h1 },
+      { x: xte, z: zTopR }, { x: xle, z: zTopR }];
+    // выбор формы: «автоматически» — прямоугольник, пока он вписывается и по площади проходит
+    const auto = c.shape !== 'rect' && c.shape !== 'curve';
+    const rect = c.shape === 'rect' || (auto && fits && enough);
+    const P = rect ? Prect : Pcurve;
+    const squeezed = !fits;
     const { A, S } = shoelace(P);
     // отдаём контур наружу: по нему строится разбивка обшивки на листы
     window.rudderContour = {
-      P, xle, xte, h1: c.h1, b: c.b, A,
+      P, xle, xte, h1: c.h1, b: c.b, A, shape: rect ? 'rect' : 'curve',
       hmax: Math.max.apply(null, P.map(pt => pt.z - c.h1)),
     };
     document.dispatchEvent(new CustomEvent('rudder:contour'));
     const bMean = c.b, hMean = A / bMean, lam = hMean / bMean;
-    const Areq = m.L * c.d / 100 * (1 + 50 * m.Cb * m.Cb * Math.pow(m.B / m.L, 2));
     const rt = (window.rudderCalc && window.rudderCalc.i.rt) || { a1: 0.2, name: 'полуподвесной на кронштейне' };
     const xax = xle + Math.max(0.05, rt.a1) * c.b;   // ось баллера: балансирная доля типа
 
@@ -276,14 +301,40 @@
     const bladePts = P.map(p => `${X(p.x).toFixed(1)},${Y(p.z).toFixed(1)}`).join(' ');
     const dots = P.map(p => `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.z).toFixed(1)}" r="2" fill="#155e75"/>`).join('');
     const zAxTop = zCounter(xax);
-    const xm2 = xle + 0.3, m2y1 = Y(zCounter(xm2)), m2y2 = Y(top[Math.round(0.3 / (xte - xle) * NP)].z);
+    // зазор h₂ меряем там, где он реально минимален: у прямоугольника — в самом
+    // низком месте подзора, у срезанной кромки — в любом сечении
+    const xm2 = rect ? xg : xle + 0.3;
+    const m2y1 = Y(zCounter(xm2));
+    const m2y2 = Y(rect ? zTopR : top[Math.round(0.3 / (xte - xle) * NP)].z);
     const xm1 = xte - 0.35, m1y1 = Y(0), m1y2 = Y(c.h1);
-    const zMidTop = top[Math.round(NP / 2)].z;
+    const zMidTop = rect ? zTopR : top[Math.round(NP / 2)].z;
     const aTxtY = Y((c.h1 + zMidTop) / 2);
+    // отвергнутый / неиспользованный вариант — тонким пунктиром, для сравнения
+    const halo = 'paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round';
+    let ghost = '';
+    if (!rect && hRect > 0.2) {
+      const gp = Prect.map(p => `${X(p.x).toFixed(1)},${Y(p.z).toFixed(1)}`).join(' ');
+      ghost = `<polygon points="${gp}" fill="none" stroke="#6b6b74" stroke-width="1.2" stroke-dasharray="6 4"/>
+      <text x="${(X(xte) + 6).toFixed(1)}" y="${(Y(zTopR) + 4).toFixed(1)}" class="lbl gray"
+            font-size="12" style="${halo}">прямоугольник: A = ${N(ARect)} м²</text>`;
+    } else if (rect && !capped && zmin < top[NP].z - 0.05) {
+      const gp = top.map(p => `${X(p.x).toFixed(1)},${Y(p.z).toFixed(1)}`).join(' ');
+      ghost = `<polyline points="${gp}" fill="none" stroke="#6b6b74" stroke-width="1.2" stroke-dasharray="6 4"/>
+      <text x="${(X(xte) + 6).toFixed(1)}" y="${(Y(top[NP].z) + 4).toFixed(1)}" class="lbl gray"
+            font-size="12" style="${halo}">кромка по обводам не нужна</text>`;
+    }
+    // габарит h — только у прямоугольного пера (у срезанного контура высота переменна)
+    const hDim = rect ? `
+      <line x1="${(X(xte) + 16).toFixed(1)}" y1="${Y(c.h1).toFixed(1)}" x2="${(X(xte) + 16).toFixed(1)}" y2="${Y(zTopR).toFixed(1)}" stroke="#16161a" stroke-width="1"/>
+      <line x1="${(X(xte) + 11).toFixed(1)}" y1="${Y(c.h1).toFixed(1)}" x2="${(X(xte) + 21).toFixed(1)}" y2="${Y(c.h1).toFixed(1)}" stroke="#16161a" stroke-width="1"/>
+      <line x1="${(X(xte) + 11).toFixed(1)}" y1="${Y(zTopR).toFixed(1)}" x2="${(X(xte) + 21).toFixed(1)}" y2="${Y(zTopR).toFixed(1)}" stroke="#16161a" stroke-width="1"/>
+      <text transform="rotate(-90 ${(X(xte) + 30).toFixed(1)} ${Y((c.h1 + zTopR) / 2).toFixed(1)})"
+            x="${(X(xte) + 30).toFixed(1)}" y="${Y((c.h1 + zTopR) / 2).toFixed(1)}" class="lbl-dim"
+            text-anchor="middle">h = ${N(Math.max(hRect, 0), 2)} м</text>` : '';
 
     $('ct-svg').innerHTML = `
     <svg viewBox="0 0 660 480" class="geo-board" style="max-width:660px" role="img"
-         aria-label="Автопостроение контура пера руля в кормовом подзоре, заданном кривой Безье">
+         aria-label="Автопостроение контура пера руля в кормовом подзоре, заданном кривой Безье: принято ${rect ? 'прямоугольное перо' : 'перо со срезанной по подзору верхней кромкой'}">
       <!-- ЛГВЛ -->
       <line x1="${X(-3)}" y1="${Y(c.d).toFixed(1)}" x2="${X(16.4)}" y2="${Y(c.d).toFixed(1)}"
             stroke="#155e75" stroke-width="1.2" stroke-dasharray="10 5"/>
@@ -318,15 +369,18 @@
       <text x="${X(xle + c.b / 2).toFixed(1)}" y="${(Y(c.h1) + 26).toFixed(1)}" class="lbl" fill="#1a7f37" font-size="12" text-anchor="middle">низ пера свободен — опора только на баллере</text>`
       : `
       <circle cx="${X(xax).toFixed(1)}" cy="${Y(c.h1).toFixed(1)}" r="6" fill="#fff" stroke="#1a7f37" stroke-width="2.2"/>
-      <text x="${(X(xax) + 12).toFixed(1)}" y="${(Y(c.h1) + 18).toFixed(1)}" class="lbl" fill="#1a7f37" font-size="12">штырь в пятке (нижняя опора)</text>`}
+      <text x="${(X(xax) + 12).toFixed(1)}" y="${(Y(c.h1) - 12).toFixed(1)}" class="lbl" fill="#1a7f37" font-size="12" style="${halo}">штырь в пятке (нижняя опора)</text>`}
       <!-- перо -->
       <polygon points="${bladePts}" fill="rgba(21,94,117,.09)" stroke="#155e75" stroke-width="2"/>
       ${dots}
-      <text x="${X((xle + xte) / 2).toFixed(1)}" y="${aTxtY.toFixed(1)}" class="lbl" font-size="16" text-anchor="middle">A = ${N(A)} м²</text>
+      ${ghost}
+      ${hDim}
+      <text x="${X((xle + xte) / 2).toFixed(1)}" y="${aTxtY.toFixed(1)}" class="lbl" font-size="16" text-anchor="middle" style="${halo}">A = ${N(A)} м²</text>
       <!-- ось баллера -->
       <line x1="${X(xax).toFixed(1)}" y1="${(Y(zAxTop) - 20).toFixed(1)}" x2="${X(xax).toFixed(1)}" y2="424"
             stroke="#1a7f37" stroke-width="1" stroke-dasharray="7 4"/>
-      <text x="${(X(xax) + 5).toFixed(1)}" y="421" class="lbl" fill="#1a7f37" font-size="11">ось баллера</text>
+      <text x="${(X(xax) - 5).toFixed(1)}" y="421" class="lbl" fill="#1a7f37" font-size="11"
+            text-anchor="end" style="${halo}">ось баллера</text>
       <!-- зазоры -->
       <line x1="${X(xm2).toFixed(1)}" y1="${m2y1.toFixed(1)}" x2="${X(xm2).toFixed(1)}" y2="${m2y2.toFixed(1)}" stroke="#16161a" stroke-width="1"/>
       <line x1="${(X(xm2) - 5).toFixed(1)}" y1="${m2y1.toFixed(1)}" x2="${(X(xm2) + 5).toFixed(1)}" y2="${m2y1.toFixed(1)}" stroke="#16161a" stroke-width="1"/>
@@ -344,24 +398,71 @@
 
     // --- бейджи ---
     const badge = (ok, html) => `<span class="badge ${ok ? 'ok' : 'bad'}">${html}</span>`;
-    const badges = [];
+    const grey = html => `<span class="badge ok" style="background:#eceae3;color:#16161a;border-color:#d8d6cf">${html}</span>`;
+    const badges = [grey(`форма пера: <b>${rect ? 'прямоугольная' : 'по обводам подзора'}</b>`)];
     if (squeezed) badges.push(badge(false, 'перо зажато: уменьшите зазоры или осадку ✗'));
     badges.push(badge(A >= Areq, `A = ${N(A)} ${A >= Areq ? '≥' : '&lt;'} A<sub>треб</sub> = ${N(Areq)} м² ${A >= Areq ? '✓' : '✗'}`));
     badges.push(badge(lam >= 1.5, `λ = h̄/b = ${N(lam)} ${lam >= 1.5 ? '≥ 1,5 ✓' : '&lt; 1,5 ✗'}`));
-    badges.push(`<span class="badge ok" style="background:#eceae3;color:#16161a;border-color:#d8d6cf">h̄ = A/b = ${N(hMean)} м</span>`);
+    badges.push(grey(`h̄ = A/b = ${N(hMean)} м`));
     $('ct-badges').innerHTML = badges.join('');
+
+    // --- принятая форма пера и её обоснование ---
+    const rectName = '<b>прямоугольное перо</b>';
+    const curveName = '<b>перо со срезанной по подзору верхней кромкой</b>';
+    const dA = Areq - ARect;
+    const why = [];
+    if (!fits) why.push(`упирается в подзор (свободная высота h = ${N(Math.max(hRect, 0), 2)} м `
+      + `меньше конструктивного минимума ${N(HMIN, 2)} м)`);
+    if (!enough) why.push(`не хватает площади: A<sub>пр</sub> = ${N(ARect)} м² &lt; `
+      + `A<sub>треб</sub> = ${N(Areq)} м² (недобор ${N(Math.max(dA, 0))} м²)`);
+    let note;
+    if (rect && auto) {
+      note = `Принято ${rectName} h × b = ${N(Math.max(hRect, 0), 2)} × ${N(c.b, 2)} м: `
+        + `прямоугольник вписывается между подошвой и подзором с зазорами h₁ = ${N(c.h1, 2)} м и `
+        + `h₂ = ${N(c.h2, 2)} м и даёт A = ${N(ARect)} м² ≥ A<sub>треб</sub> = ${N(Areq)} м². `
+        + 'Усложнять контур незачем — прямая верхняя кромка проще в изготовлении.';
+    } else if (!rect && auto) {
+      note = `Принято ${curveName}: прямоугольник не вписывается — ${why.join('; ')}. `
+        + `Срез по обводам подзора добирает ${N(Math.max(A - ARect, 0))} м² под самой кромкой `
+        + `и доводит площадь до A = ${N(A)} м² `
+        + (A >= Areq ? '≥' : '&lt;') + ` A<sub>треб</sub> = ${N(Areq)} м².`;
+    } else if (rect) {
+      note = `Форма задана вручную: ${rectName} h × b = ${N(Math.max(hRect, 0), 2)} × ${N(c.b, 2)} м. `
+        + (fits && enough
+          ? 'Автоматический выбор дал бы то же самое — прямоугольник здесь проходит.'
+          : `Автоматика перешла бы на срез по подзору: ${why.join('; ')}.`);
+    } else {
+      note = `Форма задана вручную: ${curveName}, A = ${N(A)} м². `
+        + (fits && enough
+          ? `Здесь прямоугольник вписался бы (A<sub>пр</sub> = ${N(ARect)} м² ≥ A<sub>треб</sub> = `
+            + `${N(Areq)} м²) и был бы технологичнее — срез кромки не обязателен.`
+          : `Автоматический выбор дал бы то же самое: ${why.join('; ')}.`);
+    }
+    $('ct-shape-note').innerHTML = note;
 
     // --- подстановка в формулу шнурков ---
     const term = i => {
       const a = P[i], b = P[(i + 1) % P.length];
       return `(${N(a.x, 1)}·${N(b.z, 2)} − ${N(b.x, 1)}·${N(a.z, 2)})`;
     };
+    const terms = P.length <= 6
+      ? P.map((_, i) => term(i)).join(' + ')
+      : `${term(0)} + ${term(1)} + … + ${term(P.length - 1)}`;
     $('ct-math').innerHTML = `
+      <p style="margin:4px 0"><b>Проверка прямоугольного варианта.</b>
+      Высота прямоугольного пера ограничена самым низким местом подзора в пределах хорды
+      (z<sub>подз,min</sub> = ${N(zcMin)} м над подошвой) и ватерлинией:<br>
+      h<sub>пр</sub> = min(z<sub>подз,min</sub> − h₂; d) − h₁
+      = min(${N(zcMin)} − ${N(c.h2, 2)}; ${N(c.d, 2)}) − ${N(c.h1, 2)} = ${N(Math.max(hRect, 0), 2)} м;
+      A<sub>пр</sub> = h<sub>пр</sub>·b = ${N(Math.max(hRect, 0), 2)}·${N(c.b, 2)} = ${N(ARect)} м²
+      ${fits && enough
+        ? `≥ A<sub>треб</sub> = ${N(Areq)} м² <span style="color:#1a7f37">→ прямоугольник проходит ✓</span>`
+        : `<span style="color:#b3382e">→ прямоугольник не проходит (${why.join('; ')}) ✗</span>`}</p>
       <p style="margin:4px 0"><b>Площадь по формуле шнурков (Гаусса)</b> —
       контур пера задан ${P.length} вершинами (x<sub>i</sub>, z<sub>i</sub>), м,
       обход по замкнутому многоугольнику:</p>
       <p style="margin:4px 0">A = ½·|Σ (x<sub>i</sub>·z<sub>i+1</sub> − x<sub>i+1</sub>·z<sub>i</sub>)|
-      = ½·|${term(0)} + ${term(1)} + … + ${term(P.length - 1)}|
+      = ½·|${terms}|
       = ½·|${N(Math.abs(S), 2)}| = <b>${N(A)} м²</b></p>
       <p style="margin:4px 0">Требуемая по Правилам:
       A<sub>треб</sub> = (L·d/100)·(1 + 50·C<sub>b</sub>²·(B/L)²)
@@ -374,6 +475,7 @@
   }
 
   ['ct-d', 'ct-h2', 'ct-h1', 'ct-b'].forEach(id => $(id).addEventListener('input', render));
+  if ($('ct-shape')) $('ct-shape').addEventListener('change', render);
   ['in-L', 'in-B', 'in-Cb'].forEach(id => { const el = $(id); if (el) el.addEventListener('input', render); });
   render();
 })();
