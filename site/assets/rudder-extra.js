@@ -109,7 +109,10 @@
       `<line x1="${F(X(x))}" y1="${F(yTop)}" x2="${F(X(x))}" y2="${F(Yb)}" stroke="#16161a" stroke-width="1.2"/>`));
     // сварной стык зон 0,35b
     g.push(`<line x1="${F(X(seam))}" y1="${F(yTop)}" x2="${F(X(seam))}" y2="${F(Yb)}" stroke="#b3382e" stroke-width="1.4" stroke-dasharray="7 4"/>`);
-    g.push(`<text transform="rotate(-90 ${F(X(seam) - 6)} ${F(yTop + h * sc / 2)})" x="${F(X(seam) - 6)}" y="${F(yTop + h * sc / 2)}" class="lbl" fill="#b3382e" font-size="11" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round">стык носовой и кормовой зон</text>`);
+    // подпись стыка — вдоль линии стыка, ниже подписей зон: на середине
+    // высоты она перечёркивала №1 и №2, а вверху её срезал наклонный контур
+    const ySeamLbl = yTop + h * sc * 0.62;
+    g.push(`<text transform="rotate(-90 ${F(X(seam) - 6)} ${F(ySeamLbl)})" x="${F(X(seam) - 6)}" y="${F(ySeamLbl)}" class="lbl" fill="#b3382e" font-size="11" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round">сварной стык зон</text>`);
     g.push('</g>');   // конец обрезки по контуру
     // контур пера — реальный, из автопостроения по обводам кормы
     if (outline) {
@@ -131,9 +134,12 @@
     const zc2 = 0.58 * zTop(seam / 2);
     const halo = 'paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round';
     g.push(`<text x="${F(X(seam + (b - seam) / 2))}" y="${F(Y(zc1))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№1 · s = ${p[0].acc} мм</text>`);
-    g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(zc2))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№2</text>`);
-    g.push(`<text x="${F(X(seam / 2))}" y="${F(Y(zc2) + 18)}" class="lbl" font-size="12" text-anchor="middle" style="${halo}">s = ${p[1].acc} мм</text>`);
-    g.push(`<text x="${F(X((d1 + d2) / 2))}" y="${F(Y(0.42))}" class="lbl" font-size="11" text-anchor="middle" style="${halo}">№3 · s = ${p[2].acc} мм</text>`);
+    g.push(`<text x="${F(X(seam * 0.38))}" y="${F(Y(zc2))}" class="lbl" font-size="14" text-anchor="middle" style="${halo}">№2</text>`);
+    g.push(`<text x="${F(X(seam * 0.38))}" y="${F(Y(zc2) + 18)}" class="lbl" font-size="12" text-anchor="middle" style="${halo}">s = ${p[1].acc} мм</text>`);
+    // подпись зоны №3 держим не ближе 22 px к размерной строке «b = …»:
+    // на высоком пере метр по высоте — это мало пикселей, и они сливались
+    const yz3 = Math.min(Y(0.42), Y(0.12) - 22);
+    g.push(`<text x="${F(X((d1 + d2) / 2))}" y="${F(yz3)}" class="lbl" font-size="11" text-anchor="middle" style="${halo}">№3 · s = ${p[2].acc} мм</text>`);
     // №4 — выноска влево
     g.push(`<line x1="${F(X(d1 / 2))}" y1="${F(Y(0.3))}" x2="${F(x0 - 18)}" y2="${F(Y(1.15))}" class="ln-thin" stroke-width=".9"/>`);
     g.push(`<text x="${F(x0 - 22)}" y="${F(Y(1.15) - 2)}" class="lbl" font-size="12" text-anchor="end">№4</text>`);
